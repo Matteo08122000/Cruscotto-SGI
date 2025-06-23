@@ -1,0 +1,214 @@
+import mongoose, { Schema, Document } from "mongoose";
+
+export interface UserDocument extends mongoose.Document {
+  id: number;
+  email: string;
+  password: string;
+  role: string;
+  clientId: number; 
+  lastLogin: Date | null;
+  sessionExpiry: Date | null;
+  createdAt: Date | null;
+  legacyId: number;
+  failedLoginAttempts: number;
+  lockoutUntil: Date | null;
+}
+
+const userSchema = new Schema<UserDocument>({
+  id: { type: Number, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, required: true, enum: ["superadmin", "admin", "viewer"], default: "viewer" },
+  clientId: { type: Number, default: null },
+  lastLogin: { type: Date, default: null },
+  sessionExpiry: { type: Date, default: null },
+  createdAt: { type: Date, default: Date.now },
+  legacyId: { type: Number, unique: true },
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockoutUntil: { type: Date, default: null },
+});
+
+// Document Schema
+export interface DocumentDocument extends mongoose.Document {
+  id: number;
+  title: string;
+  path: string;
+  revision: string;
+  driveUrl: string;
+  fileType: string;
+  alertStatus: string | null;
+  expiryDate: Date | null;  
+  parentId: number | null;
+  isObsolete: boolean | null;
+  fileHash: string | null;
+  encryptedCachePath: string | null;
+  clientId: number | null; 
+  ownerId: number | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  legacyId: number;
+  googleFileId: string | null;
+}
+
+const documentSchema = new Schema<DocumentDocument>({
+  id: { type: Number, required: true, unique: true },
+  title: { type: String, required: true },
+  path: { type: String, required: true },
+  revision: { type: String, required: true },
+  driveUrl: { type: String, required: true },
+  fileType: { type: String, required: true },
+  alertStatus: { type: String, default: "none" },
+  expiryDate: { type: Date, default: null }, 
+  parentId: { type: Number, default: null },
+  isObsolete: { type: Boolean, default: false },
+  fileHash: { type: String, default: null },
+  encryptedCachePath: { type: String, default: null },
+  clientId: { type: Number, default: null }, 
+  ownerId: { type: Number, default: null },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  legacyId: { type: Number, unique: true },
+  googleFileId: { type: String, index: true, unique: true, sparse: true },
+});
+
+// Interfaccia InsertDocument aggiornata
+export interface InsertDocument {
+  title: string;
+  path: string;
+  revision: string;
+  driveUrl: string;
+  fileType: string;
+  alertStatus?: string;
+  expiryDate?: Date | null; 
+  parentId?: number | null;
+  isObsolete?: boolean;
+  fileHash?: string | null;
+  encryptedCachePath?: string | null;
+  clientId?: number;
+  ownerId?: number;
+}
+
+// Log Schema
+export interface LogDocument extends mongoose.Document {
+  id: number;
+  userId: number;
+  action: string;
+  documentId: number | null;
+  details: any;
+  timestamp: Date | null;
+  legacyId: number;
+}
+
+const logSchema = new Schema<LogDocument>({
+  id: { type: Number, required: true, unique: true },
+  userId: { type: Number, required: true },
+  action: { type: String, required: true },
+  documentId: { type: Number, default: null },
+  details: { type: Schema.Types.Mixed, default: null },
+  timestamp: { type: Date, default: Date.now },
+  legacyId: { type: Number, unique: true },
+});
+
+// Counter Schema for auto-incrementing IDs
+interface CounterDocument extends mongoose.Document {
+  _id: string;
+  seq: number;
+}
+
+const counterSchema = new Schema<CounterDocument>({
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 0 },
+});
+
+export const Counter = mongoose.model<CounterDocument>(
+  "Counter",
+  counterSchema
+);
+
+// Function to get the next sequence value
+export async function getNextSequence(name: string): Promise<number> {
+  const counter = await Counter.findByIdAndUpdate(
+    name,
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  return counter.seq;
+}
+
+// Client Schema
+export interface ClientDocument extends mongoose.Document {
+  id: number;
+  name: string;
+  driveFolderId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  legacyId: number;
+
+  //  oggetto per tokens Google
+  google?: {
+    accessToken: string;
+    refreshToken: string;
+    expiryDate?: number;
+  };
+}
+
+const clientSchema = new mongoose.Schema<ClientDocument>({
+  id: { type: Number, required: true, unique: true },
+  legacyId: { type: Number, required: true, unique: true },
+  name: { type: String, required: true },
+  driveFolderId: { type: String, required: true },
+  google: {
+    accessToken: { type: String, required: false },
+    refreshToken: { type: String, required: false },
+    expiryDate: { type: Number, required: false },
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+// Company Code Schema
+export interface CompanyCodeDocument extends mongoose.Document {
+  id: number;
+  code: string;
+  role: string;
+  usageLimit: number;
+  usageCount: number;
+  expiresAt: Date | null;
+  isActive: boolean;
+  createdBy: number;
+  createdAt: Date;
+  updatedAt: Date;
+  legacyId: number | null;
+}
+
+const companyCodeSchema = new Schema<CompanyCodeDocument>({
+  id: { type: Number, required: true, unique: true },
+  code: { type: String, required: true, unique: true },
+  role: { type: String, required: true, default: "admin" },
+  usageLimit: { type: Number, default: 1 },
+  usageCount: { type: Number, default: 0 },
+  expiresAt: { type: Date, default: null },
+  isActive: { type: Boolean, default: true },
+  createdBy: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  legacyId: { type: Number, unique: true, sparse: true},
+});
+
+// Create models
+export const UserModel = mongoose.model<UserDocument>("User", userSchema);
+export const DocumentModel = mongoose.model<DocumentDocument>(
+  "Document",
+  documentSchema
+);
+export const LogModel = mongoose.model<LogDocument>("Log", logSchema);
+export const ClientModel = mongoose.model<ClientDocument>(
+  "Client",
+  clientSchema
+);
+export const CompanyCodeModel = mongoose.model<CompanyCodeDocument>(
+  "CompanyCode",
+  companyCodeSchema
+);
+
+export { documentSchema };
