@@ -21,11 +21,15 @@ ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456789
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 ```
 
-### 3. Configurazione Admin
+### 3. URL Applicazione (OBBLIGATORIE)
 ```env
-DEFAULT_ADMIN_EMAIL=admin@yourcompany.com
-DEFAULT_ADMIN_PASSWORD=your-secure-admin-password
+# URL di base del backend (es. http://localhost:5000 o https://dominio.com)
+SERVER_BASE_URL=http://localhost:5000
+# URL del frontend (es. http://localhost:5173 o https://dominio.com)
+FRONTEND_URL=http://localhost:5173
 ```
+
+> **Nota:** `SERVER_BASE_URL` è fondamentale per il corretto funzionamento dell'autenticazione Google OAuth. Se non impostata correttamente, il callback `/api/google/callback` fallirà e l'accesso tramite Google non funzionerà.
 
 ## Generazione Chiavi Sicure
 
@@ -60,9 +64,9 @@ SESSION_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
 ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 
-# Admin
-DEFAULT_ADMIN_EMAIL=admin@example.com
-DEFAULT_ADMIN_PASSWORD=Admin123!
+# URL Applicazione
+SERVER_BASE_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:5173
 
 # Environment
 NODE_ENV=development
@@ -92,7 +96,7 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+SMTP_PASSWORD=your-app-password
 ```
 
 ## Sicurezza in Produzione

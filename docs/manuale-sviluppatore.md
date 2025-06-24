@@ -172,16 +172,19 @@ GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
+SMTP_PASSWORD=your_app_password
 
 # Security
 SESSION_SECRET=your_session_secret_here
 CSRF_SECRET=your_csrf_secret_here
 
+# URL Applicazione (OBBLIGATORIE)
+SERVER_BASE_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:5173
+
 # Environment
 NODE_ENV=development
 PORT=5000
-CLIENT_URL=http://localhost:5173
 ```
 
 #### File .env.production
@@ -200,16 +203,19 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 SMTP_HOST=your_smtp_host
 SMTP_PORT=587
 SMTP_USER=your_production_email
-SMTP_PASS=your_production_password
+SMTP_PASSWORD=your_production_password
 
 # Security
 SESSION_SECRET=your_production_session_secret
 CSRF_SECRET=your_production_csrf_secret
 
+# URL Applicazione (OBBLIGATORIE)
+SERVER_BASE_URL=https://yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+
 # Environment
 NODE_ENV=production
 PORT=5000
-CLIENT_URL=https://yourdomain.com
 ```
 
 ### Configurazione Google Drive API
@@ -1646,7 +1652,7 @@ BACKUP_STORAGE_PATH=/var/backups/documentiiso
 NOTIFICATION_SMTP_HOST=smtp.gmail.com
 NOTIFICATION_SMTP_PORT=587
 NOTIFICATION_SMTP_USER=noreply@documentiiso.com
-NOTIFICATION_SMTP_PASS=your_app_password
+NOTIFICATION_SMTP_PASSWORD=your_app_password
 NOTIFICATION_FROM_ADDRESS=noreply@documentiiso.com
 
 # Scheduler Configuration

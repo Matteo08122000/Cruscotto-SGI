@@ -168,18 +168,18 @@ export default function BackupPage() {
     <div className="flex flex-col min-h-screen">
       <HeaderBar user={user} />
     
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-2 sm:p-6 space-y-6 w-full max-w-4xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gestione Backup</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestione Backup</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Crea, gestisci e ripristina i backup del database
           </p>
         </div>
         <Button
           onClick={createBackup}
           disabled={isCreatingBackup}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
         >
           {isCreatingBackup ? (
             <>
@@ -240,7 +240,7 @@ export default function BackupPage() {
       {/* Lista Backup */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Backup Disponibili</CardTitle>
               <CardDescription>
@@ -252,6 +252,7 @@ export default function BackupPage() {
               size="sm"
               onClick={loadBackups}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -274,27 +275,25 @@ export default function BackupPage() {
               {backups.map((backup, index) => (
                 <div
                   key={backup.filename}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-2"
                 >
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 w-full">
                     <div className="flex-shrink-0">
                       <Database className="h-8 w-8 text-blue-500" />
                     </div>
-                    <div>
-                      <div className="font-medium">{backup.filename}</div>
-                      <div className="text-sm text-muted-foreground space-x-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium break-all">{backup.filename}</div>
+                      <div className="text-sm text-muted-foreground space-x-4 flex flex-col sm:flex-row">
                         <span>Dimensione: {formatFileSize(backup.size)}</span>
                         <span>Creato: {formatDate(backup.createdAt)}</span>
                         <span>Modificato: {formatDate(backup.modifiedAt)}</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-row flex-wrap items-center gap-2 w-full md:w-auto justify-end">
                     <Badge variant="outline">
                       {index === 0 ? "Più recente" : "Archiviato"}
                     </Badge>
-                    
                     <Button
                       variant="outline"
                       size="sm"
@@ -302,7 +301,6 @@ export default function BackupPage() {
                     >
                       <Download className="h-4 w-4" />
                     </Button>
-                    
                     <Button
                       variant="outline"
                       size="sm"
@@ -321,23 +319,22 @@ export default function BackupPage() {
 
       {/* Modal di conferma ripristino */}
       {selectedBackup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-2">
+          <div className="bg-background p-4 sm:p-6 rounded-lg max-w-md w-full mx-4">
             <div className="flex items-center space-x-2 mb-4">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
               <h3 className="font-semibold">Conferma Ripristino</h3>
             </div>
-            
             <p className="text-sm text-muted-foreground mb-4">
               Sei sicuro di voler ripristinare il database da questo backup? 
               Questa operazione sovrascriverà tutti i dati attuali e non può essere annullata.
             </p>
-            
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <Button
                 variant="outline"
                 onClick={() => setSelectedBackup(null)}
                 disabled={isRestoring}
+                className="w-full sm:w-auto"
               >
                 Annulla
               </Button>
@@ -345,6 +342,7 @@ export default function BackupPage() {
                 variant="destructive"
                 onClick={() => restoreBackup(selectedBackup)}
                 disabled={isRestoring}
+                className="w-full sm:w-auto"
               >
                 {isRestoring ? (
                   <>
@@ -359,8 +357,8 @@ export default function BackupPage() {
           </div>
         </div>
       )}
-      </div>
-      <Footer />
     </div>
+    <Footer />
+  </div>
   );
 } 

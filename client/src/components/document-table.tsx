@@ -150,12 +150,11 @@ export default function DocumentTable({
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center">
                       {getFileIcon(document.fileType)}
-                      <a
-                        href={`/documents/${document.legacyId}`}
-                        className="ml-2 text-primary-600 dark:text-primary-400 hover:underline text-xs sm:text-sm truncate max-w-[120px] xs:max-w-[160px] sm:max-w-full"
+                      <span
+                        className="ml-2 text-primary-600 dark:text-primary-400 text-xs sm:text-sm truncate max-w-[120px] xs:max-w-[160px] sm:max-w-full"
                       >
                         {document.title}
-                      </a>
+                      </span>
                       <span className="ml-2 sm:hidden text-xs text-slate-500">
                         {document.revision}
                       </span>

@@ -296,7 +296,7 @@ export default function UsersPage() {
       <HeaderBar user={user} />
 
       <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Gestione Utenti
@@ -309,13 +309,13 @@ export default function UsersPage() {
           {/* Users table */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <CardTitle className="flex items-center">
                   <Users className="mr-2 h-5 w-5" />
                   Utenti del Sistema
                 </CardTitle>
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+                  <div className="text-sm text-slate-500 dark:text-slate-400 text-center sm:text-left">
                     {totalUsers} utenti registrati
                   </div>
                   <Dialog
@@ -323,7 +323,7 @@ export default function UsersPage() {
                     onOpenChange={setCreateDialogOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button size="sm" className="flex items-center">
+                      <Button size="sm" className="flex items-center w-full sm:w-auto">
                         <UserPlus className="mr-2 h-4 w-4" />
                         Nuovo Utente
                       </Button>
@@ -458,8 +458,8 @@ export default function UsersPage() {
                 </div>
               ) : users && users.length > 0 ? (
                 <>
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="overflow-x-auto w-full">
+                    <Table className="min-w-[600px] md:min-w-0 w-full">
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[50px]">ID</TableHead>
@@ -542,13 +542,13 @@ export default function UsersPage() {
                     </Table>
                   </div>
                   
-                  {/*  Paginazione */}
+                  {/* Paginazione responsive */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6">
-                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-2">
+                      <div className="text-sm text-slate-500 dark:text-slate-400 text-center md:text-left">
                         Pagina {currentPage} di {totalPages} ({totalUsers} utenti totali)
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2 justify-center md:justify-end">
                         <Button
                           variant="outline"
                           size="sm"
@@ -558,7 +558,7 @@ export default function UsersPage() {
                           <ChevronLeft className="h-4 w-4" />
                           Precedente
                         </Button>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex flex-wrap items-center gap-1">
                           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <Button
                               key={page}

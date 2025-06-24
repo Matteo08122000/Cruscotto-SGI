@@ -51,11 +51,16 @@ GOOGLE_CLIENT_SECRET=your_client_secret
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email
-SMTP_PASS=your_password
+SMTP_PASSWORD=your_password
 
 # Security
 SESSION_SECRET=your_session_secret
 CSRF_SECRET=your_csrf_secret
+
+# URL di base del server (obbligatoria)
+SERVER_BASE_URL=http://localhost:5000
+# URL del frontend (obbligatoria)
+FRONTEND_URL=http://localhost:5173
 ```
 
 ### Passo 3: Creazione del Primo SuperAdmin
@@ -263,11 +268,16 @@ GOOGLE_CLIENT_SECRET=your_client_secret
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email
-SMTP_PASS=your_password
+SMTP_PASSWORD=your_password
 
 # Security
 SESSION_SECRET=your_session_secret
 CSRF_SECRET=your_csrf_secret
+
+# URL di base del server (obbligatoria)
+SERVER_BASE_URL=http://localhost:5000
+# URL del frontend (obbligatoria)
+FRONTEND_URL=http://localhost:5173
 ```
 
 ## 📚 Documentazione

@@ -74,16 +74,27 @@ export function registerBackupRoutes(app: Express): void {
   // Route per ripristinare da un backup
   app.post("/api/admin/restore", isAdmin, async (req, res) => {
     try {
-      const { backupPath } = req.body;
+      const { backupFilename } = req.body;
       
-      if (!backupPath) {
+      if (!backupFilename || typeof backupFilename !== "string") {
         return res.status(400).json({
           success: false,
-          message: "Percorso del file di backup non specificato"
+          message: "Nome del file di backup non specificato o non valido"
         });
       }
 
-      // Verifica che il file esista
+      // Protezione contro path traversal
+      if (backupFilename.includes("..") || backupFilename.includes("/") || backupFilename.includes("\\")) {
+        return res.status(400).json({
+          success: false,
+          message: "Nome del file di backup non valido"
+        });
+      }
+
+      const backupDir = path.join(process.cwd(), "backups");
+      const backupPath = path.join(backupDir, backupFilename);
+
+      // Verifica che il file esista SOLO nella cartella backup
       if (!fs.existsSync(backupPath)) {
         return res.status(404).json({
           success: false,

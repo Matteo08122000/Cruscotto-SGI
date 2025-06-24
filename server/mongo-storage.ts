@@ -51,7 +51,6 @@ export class MongoStorage implements IStorage {
       collection: "sessions",
     });
     this.backupService = new BackupService();
-    this.ensureAdminUser();
   }
 
   public async connect(): Promise<void> {
@@ -66,40 +65,6 @@ export class MongoStorage implements IStorage {
       // In un'applicazione reale, questo errore critico dovrebbe essere gestito
       // da un sistema di logging centralizzato e potrebbe causare il riavvio del processo.
       throw error;
-    }
-  }
-
-  private async ensureAdminUser() {
-    try {
-      const createDefaultAdmin = process.env.CREATE_DEFAULT_ADMIN === "true";
-      if (process.env.NODE_ENV === "production" && !createDefaultAdmin) return;
-
-      const usersExist = (await UserModel.countDocuments().exec()) > 0;
-      if (usersExist || !createDefaultAdmin) return;
-
-      const adminUser = await this.createUser({
-        email: process.env.DEFAULT_ADMIN_EMAIL || "admin@example.com",
-        password:
-          process.env.DEFAULT_ADMIN_PASSWORD ||
-          "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm",
-        role: "admin",
-        clientId: null,
-        lastLogin: null,
-        sessionExpiry: null,
-        failedLoginAttempts: 0,
-        lockoutUntil: null,
-      });
-
-      if (adminUser) {
-        await this.createLog({
-          userId: adminUser.legacyId,
-          action: "system_init",
-          details: { message: "Default admin user created" },
-        });
-      }
-    } catch (error) {
-      // Errore durante la creazione dell'utente admin di default.
-      // Da loggare centralmente.
     }
   }
 
@@ -789,7 +754,7 @@ export class MongoStorage implements IStorage {
       );
       const fileHash = await hashFile(filePath);
       await encryptFile(filePath, encryptedPath);
-      return await this.updateDocument(id, { fileHash, encryptedCachePath });
+      return await this.updateDocument(id, { fileHash, encryptedCachePath: encryptedPath });
     } catch (error) {
       return this.getDocument(id);
     }

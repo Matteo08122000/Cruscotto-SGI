@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { googleDriveService } from "../services/google-drive";
-import { prisma } from "../lib/prisma";
+import { UserModel, ClientModel } from "../../models/mongoose-models";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -13,37 +13,27 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { legacyId: userId },
-      include: {
-        googleDriveTokens: true,
-        client: true,
-      },
-    });
-
+    // Cerca l'utente tramite Mongoose, includendo client e googleDriveTokens
+    const user = await UserModel.findOne({ legacyId: userId }).lean();
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (!user.googleDriveTokens) {
+    // Recupera il client associato
+    const client = await ClientModel.findOne({ legacyId: user.clientId }).lean();
+    if (!client?.google?.refreshToken) {
       return res.status(400).json({ error: "Google Drive not configured" });
     }
-
-    if (!user.client?.driveFolderId) {
-      return res
-        .status(400)
-        .json({ error: "Drive folder not configured for client" });
+    if (!client?.driveFolderId) {
+      return res.status(400).json({ error: "Drive folder not configured for client" });
     }
-
     // Avvia il processo di sincronizzazione.
     const syncResult = await googleDriveService.syncDocuments(userId);
-
     res.json({
       message: "Sync started successfully",
       result: syncResult,
     });
   } catch (error) {
-    
     res.status(500).json({ error: "Failed to sync documents" });
   }
 });

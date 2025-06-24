@@ -10,28 +10,28 @@ const requiredEnvVars = [
   "SESSION_SECRET",
   "ENCRYPTION_KEY",
   "LINK_SECRET_KEY",
-  "DEFAULT_ADMIN_EMAIL",
-  "DEFAULT_ADMIN_PASSWORD",
   "SMTP_HOST",
   "SMTP_PORT",
   "SMTP_USER",
   "SMTP_PASSWORD",
+  "SERVER_BASE_URL",
+  "FRONTEND_URL",
 ];
 
-
-
 let allGood = true;
+const missingVars: string[] = [];
 
 for (const key of requiredEnvVars) {
   const value = process.env[key];
   if (!value || value.trim() === "") {
     allGood = false;
+    missingVars.push(key);
   } 
 }
 
 if (allGood) {
-  
   process.exit(0);
 } else {
+  console.error("[ERRORE] Variabili d'ambiente mancanti:", missingVars.join(", "));
   process.exit(1);
 }
