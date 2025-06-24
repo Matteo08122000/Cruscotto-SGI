@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 import cors from "cors";
 import { mongoStorage } from "./mongo-storage";
 import logger, { logRequest, logError } from "./logger";
-import { setupSecurity, setupCSRF } from "./security";
+import { setupSecurity } from "./security";
 import { setupAuth } from "./auth";
 
 logger.info("Avvio server..."); // LOG INIZIALE
@@ -40,11 +40,8 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Inizializza la gestione delle sessioni prima del CSRF.
+// Inizializza la gestione delle sessioni.
 setupAuth(app);
-
-// Inizializza la protezione CSRF dopo le sessioni.
-setupCSRF(app);
 
 // Applica le misure di sicurezza solo in produzione
 if (process.env.NODE_ENV === "production") {

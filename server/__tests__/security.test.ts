@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
-import express from 'express';
+import express, { Express } from 'express';
 import session from 'express-session';
-import { setupSecurity, setupCSRF, validateContactRequest } from '../security';
+import { setupSecurity, validateContactRequest } from '../security';
 import { verifySecureLink } from '../secure-links';
 
 describe('Security Module Tests', () => {
-  let app: express.Application;
+  let app: Express;
 
   beforeEach(() => {
     app = express();
@@ -85,116 +85,6 @@ describe('Security Module Tests', () => {
 
       expect(response.status).toBe(429);
       expect(response.body.error).toBe('Troppe richieste in breve tempo. Riprova più tardi.');
-    });
-  });
-
-  describe('CSRF Protection', () => {
-    it('should generate CSRF token', async () => {
-      setupCSRF(app);
-      
-      const response = await request(app)
-        .get('/api/csrf-token')
-        .expect(200);
-
-      expect(response.body).toHaveProperty('csrfToken');
-      expect(typeof response.body.csrfToken).toBe('string');
-      expect(response.body.csrfToken.length).toBeGreaterThan(0);
-    });
-
-    it('should reject requests without CSRF token', async () => {
-      setupCSRF(app);
-      
-      app.post('/api/protected', (req, res) => {
-        res.json({ message: 'success' });
-      });
-
-      const response = await request(app)
-        .post('/api/protected')
-        .send({ data: 'test' });
-
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Token CSRF mancante nella richiesta');
-    });
-
-    it('should accept requests with valid CSRF token', async () => {
-      setupCSRF(app);
-      
-      app.post('/api/protected', (req, res) => {
-        res.json({ message: 'success' });
-      });
-
-      // Prima ottieni il token CSRF
-      const tokenResponse = await request(app)
-        .get('/api/csrf-token')
-        .expect(200);
-
-      const csrfToken = tokenResponse.body.csrfToken;
-
-      // Poi usa il token per la richiesta protetta
-      const response = await request(app)
-        .post('/api/protected')
-        .set('x-csrf-token', csrfToken)
-        .send({ data: 'test' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('success');
-    });
-
-    it('should accept requests with CSRF token in body', async () => {
-      setupCSRF(app);
-      
-      app.post('/api/protected', (req, res) => {
-        res.json({ message: 'success' });
-      });
-
-      // Prima ottieni il token CSRF
-      const tokenResponse = await request(app)
-        .get('/api/csrf-token')
-        .expect(200);
-
-      const csrfToken = tokenResponse.body.csrfToken;
-
-      // Poi usa il token nel body della richiesta
-      const response = await request(app)
-        .post('/api/protected')
-        .send({ 
-          data: 'test',
-          csrfToken: csrfToken
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('success');
-    });
-
-    it('should reject requests with invalid CSRF token', async () => {
-      setupCSRF(app);
-      
-      app.post('/api/protected', (req, res) => {
-        res.json({ message: 'success' });
-      });
-
-      const response = await request(app)
-        .post('/api/protected')
-        .set('x-csrf-token', 'invalid-token')
-        .send({ data: 'test' });
-
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Token CSRF non valido');
-    });
-
-    it('should allow CSRF exempt paths', async () => {
-      setupCSRF(app);
-      
-      app.post('/api/login', (req, res) => {
-        res.json({ message: 'login success' });
-      });
-
-      const response = await request(app)
-        .post('/api/login')
-        .send({ email: 'test@example.com', password: 'password' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('login success');
     });
   });
 

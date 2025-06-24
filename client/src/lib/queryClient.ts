@@ -1,29 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-
-let csrfToken: string | null = null;
-
-async function getCSRFToken(forceRefresh = false): Promise<string> {
-  if (!csrfToken || forceRefresh) {
-    try {
-      const response = await fetch('/api/csrf-token', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        csrfToken = data.csrfToken;
-      } else {
-        
-        csrfToken = null;
-      }
-    } catch (error) {
-      
-      csrfToken = null;
-    }
-  }
-  return csrfToken || '';
-}
-
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -37,12 +13,8 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   try {
-    // Forza il refresh del token CSRF per ogni richiesta modificante
-    const csrfToken = await getCSRFToken(["POST", "PUT", "DELETE", "PATCH"].includes(method));
-
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-CSRF-Token": csrfToken,
     };
 
     const res = await fetch(url, {
@@ -61,7 +33,6 @@ export async function apiRequest(
           method: 'POST',
           headers: {
             "Content-Type": "application/json",
-            "X-CSRF-Token": csrfToken,
           },
           credentials: 'include'
         });
@@ -92,11 +63,6 @@ export async function apiRequest(
    
     throw error;
   }
-}
-
-//  Funzione per resettare il token CSRF (utile per logout)
-export function resetCSRFToken() {
-  csrfToken = null;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -198,6 +164,7 @@ export const queryClient = new QueryClient({
             return (status >= 500 || status === 0) && failureCount < 2;
           }
         }
+        
         return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),

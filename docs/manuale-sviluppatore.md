@@ -176,7 +176,6 @@ SMTP_PASSWORD=your_app_password
 
 # Security
 SESSION_SECRET=your_session_secret_here
-CSRF_SECRET=your_csrf_secret_here
 
 # URL Applicazione (OBBLIGATORIE)
 REDIRECT_URI=http://localhost:5000
@@ -207,7 +206,6 @@ SMTP_PASSWORD=your_production_password
 
 # Security
 SESSION_SECRET=your_production_session_secret
-CSRF_SECRET=your_production_csrf_secret
 
 # URL Applicazione (OBBLIGATORIE)
 REDIRECT_URI=https://yourdomain.com

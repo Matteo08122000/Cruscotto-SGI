@@ -8,7 +8,6 @@ declare global {
   namespace Express.Session {
     interface SessionData {
       legacyId?: number;
-      csrfToken?: string;
     }
   }
 }
@@ -17,7 +16,6 @@ declare global {
 declare module 'express-session' {
   interface SessionData {
     legacyId?: number;
-    csrfToken?: string;
   }
 }
 

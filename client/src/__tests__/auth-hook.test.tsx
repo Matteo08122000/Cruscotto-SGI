@@ -18,8 +18,7 @@ vi.mock('../lib/queryClient', () => ({
     invalidateQueries: vi.fn(),
     setQueryData: vi.fn(),
     clear: vi.fn()
-  },
-  resetCSRFToken: vi.fn()
+  }
 }));
 
 // Componente di test per accedere al context

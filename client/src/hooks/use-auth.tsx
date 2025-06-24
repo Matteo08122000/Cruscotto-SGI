@@ -5,7 +5,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { UserDocument as User } from "../../../server/shared-types/schema";
-import { getQueryFn, apiRequest, queryClient, resetCSRFToken } from "../lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "./use-toast";
 import { z } from "zod";
 
@@ -192,17 +192,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      resetCSRFToken();
       queryClient.clear();
       queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Disconnessione effettuata",
         description: "Sei stato disconnesso con successo",
+        duration: 2000,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Disconnessione fallita",
+        title: "Errore durante la disconnessione",
         description: error.message,
         variant: "destructive",
       });
