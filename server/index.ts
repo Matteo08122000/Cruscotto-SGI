@@ -40,15 +40,16 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-if (process.env.NODE_ENV === "production") {
-  setupSecurity(app);
-}
-
 // Inizializza la gestione delle sessioni prima del CSRF.
 setupAuth(app);
 
 // Inizializza la protezione CSRF dopo le sessioni.
 setupCSRF(app);
+
+// Applica le misure di sicurezza solo in produzione
+if (process.env.NODE_ENV === "production") {
+  setupSecurity(app);
+}
 
 // ✅ Logging API strutturato
 app.use((req, res, next) => {
