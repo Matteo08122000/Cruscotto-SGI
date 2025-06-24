@@ -124,21 +124,17 @@ app.use((req, res, next) => {
     const { startExpirationChecks } = await import("./notification-service");
     startExpirationChecks();
 
-    const port = 5000;
-    server.listen(
-      {
+    // Usa la porta fornita da Render, altrimenti usa 5000 come fallback
+    const port = Number(process.env.PORT) || 5000;
+
+    // Semplifichiamo la chiamata a listen per massima compatibilità
+    server.listen(port, "0.0.0.0", () => {
+      logger.info(`Server avviato su porta ${port}`, {
+        environment: process.env.NODE_ENV,
         port,
         host: "0.0.0.0",
-        reusePort: true,
-      },
-      () => {
-        logger.info(`Server avviato su porta ${port}`, {
-          environment: process.env.NODE_ENV,
-          port,
-          host: "0.0.0.0",
-        });
-      }
-    );
+      });
+    });
   } catch (error) {
     logError(error as Error, {
       context: "Server startup",

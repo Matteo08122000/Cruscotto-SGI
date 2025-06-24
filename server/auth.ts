@@ -318,6 +318,39 @@ export function setupAuth(app: Express) {
       }
     }
   );
+
+  // Auth status endpoint - used by client to check authentication status
+  app.get("/api/auth-status", sessionTimeoutMiddleware, async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Non autenticato" });
+      }
+      
+      const { password, ...safeUser } = req.user as User;
+      let clientDetails = null;
+      if (safeUser.clientId) {
+        clientDetails = await storage.getClient(safeUser.clientId);
+      }
+      
+      res.json({ 
+        authenticated: true, 
+        user: { ...safeUser, client: clientDetails },
+        sessionExpiry: req.user.sessionExpiry
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel controllo dello stato di autenticazione" });
+    }
+  });
+
+  // Endpoint per verificare lo stato dell'autenticazione
+  app.get("/api/auth-status", (req, res) => {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      const { password, ...safeUser } = req.user as any;
+      res.status(200).json({ authenticated: true, user: safeUser });
+    } else {
+      res.status(401).json({ message: "Non autenticato" });
+    }
+  });
 }
 
 // Funzione per migrare password da bcrypt a scrypt
