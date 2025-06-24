@@ -58,7 +58,7 @@ SESSION_SECRET=your_session_secret
 CSRF_SECRET=your_csrf_secret
 
 # URL di base del server (obbligatoria)
-SERVER_BASE_URL=http://localhost:5000
+REDIRECT_URI=http://localhost:5000
 # URL del frontend (obbligatoria)
 FRONTEND_URL=http://localhost:5173
 ```
@@ -275,7 +275,7 @@ SESSION_SECRET=your_session_secret
 CSRF_SECRET=your_csrf_secret
 
 # URL di base del server (obbligatoria)
-SERVER_BASE_URL=http://localhost:5000
+REDIRECT_URI=http://localhost:5000
 # URL del frontend (obbligatoria)
 FRONTEND_URL=http://localhost:5173
 ```

@@ -14,7 +14,7 @@ const requiredEnvVars = [
   "SMTP_PORT",
   "SMTP_USER",
   "SMTP_PASSWORD",
-  "SERVER_BASE_URL",
+  "REDIRECT_URI",
   "FRONTEND_URL",
 ];
 

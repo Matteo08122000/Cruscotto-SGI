@@ -179,7 +179,7 @@ SESSION_SECRET=your_session_secret_here
 CSRF_SECRET=your_csrf_secret_here
 
 # URL Applicazione (OBBLIGATORIE)
-SERVER_BASE_URL=http://localhost:5000
+REDIRECT_URI=http://localhost:5000
 FRONTEND_URL=http://localhost:5173
 
 # Environment
@@ -210,7 +210,7 @@ SESSION_SECRET=your_production_session_secret
 CSRF_SECRET=your_production_csrf_secret
 
 # URL Applicazione (OBBLIGATORIE)
-SERVER_BASE_URL=https://yourdomain.com
+REDIRECT_URI=https://yourdomain.com
 FRONTEND_URL=https://yourdomain.com
 
 # Environment

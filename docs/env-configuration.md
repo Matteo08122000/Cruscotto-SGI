@@ -24,12 +24,12 @@ LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
 ### 3. URL Applicazione (OBBLIGATORIE)
 ```env
 # URL di base del backend (es. http://localhost:5000 o https://dominio.com)
-SERVER_BASE_URL=http://localhost:5000
+REDIRECT_URI=http://localhost:5000
 # URL del frontend (es. http://localhost:5173 o https://dominio.com)
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **Nota:** `SERVER_BASE_URL` è fondamentale per il corretto funzionamento dell'autenticazione Google OAuth. Se non impostata correttamente, il callback `/api/google/callback` fallirà e l'accesso tramite Google non funzionerà.
+> **Nota:** `REDIRECT_URI` è fondamentale per il corretto funzionamento dell'autenticazione Google OAuth. Se non impostata correttamente, il callback `/api/google/callback` fallirà e l'accesso tramite Google non funzionerà.
 
 ## Generazione Chiavi Sicure
 
@@ -65,7 +65,7 @@ ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456789
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 
 # URL Applicazione
-SERVER_BASE_URL=http://localhost:5000
+REDIRECT_URI=http://localhost:5000
 FRONTEND_URL=http://localhost:5173
 
 # Environment
