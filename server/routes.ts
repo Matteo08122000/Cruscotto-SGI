@@ -1133,9 +1133,21 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(404).json({ message: "Documento non trovato" });
       }
 
+      // Validazione: il file deve essere sotto la directory document.path (relativa alla root dei documenti)
+      const documentsRoot = path.resolve(process.cwd(), "documents");
+      const documentDir = path.resolve(documentsRoot, document.path);
+      const requestedFile = path.resolve(filePath);
+      if (!requestedFile.startsWith(documentDir + path.sep)) {
+        return res.status(400).json({ message: "Accesso al file non consentito: il file deve essere sotto la directory del documento." });
+      }
+      // Protezione path traversal
+      if (path.relative(documentDir, requestedFile).includes("..")) {
+        return res.status(400).json({ message: "Path traversal non consentito." });
+      }
+
       const updatedDocument = await storage.hashAndEncryptDocument(
         id,
-        filePath
+        requestedFile
       );
 
       if (req.user && updatedDocument && updatedDocument.encryptedCachePath) {
@@ -1687,36 +1699,43 @@ export async function registerRoutes(app: Express): Promise<Express> {
   });
 
   // Endpoint di debug per verificare autenticazione e permessi
-  app.get("/api/debug/auth", (req, res) => {
-    try {
-      const authStatus = {
-        isAuthenticated: req.isAuthenticated(),
-        user: req.user ? {
-          id: req.user.legacyId,
-          email: req.user.email,
-          role: req.user.role,
-          clientId: req.user.clientId,
-          sessionExpiry: req.user.sessionExpiry
-        } : null,
-        session: req.session ? {
-          id: req.session.id,
-          cookie: req.session.cookie
-        } : null,
-        headers: {
-          'user-agent': req.get('User-Agent'),
-          'origin': req.get('Origin'),
-          'referer': req.get('Referer')
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(authStatus);
-    } catch (error) {
-      res.status(500).json({ 
-        message: "Errore nel debug dell'autenticazione",
-        error: error instanceof Error ? error.message : String(error)
-      });
+  app.get("/api/debug/auth", (req, res, next) => {
+    // Permetti solo in ambienti non di produzione
+    if (process.env.NODE_ENV === "production") {
+      return res.status(404).json({ message: "Not found" });
     }
+    // Applica il controllo superadmin
+    isSuperAdmin(req, res, function () {
+      try {
+        const authStatus = {
+          isAuthenticated: req.isAuthenticated(),
+          user: req.user ? {
+            id: req.user.legacyId,
+            email: req.user.email,
+            role: req.user.role,
+            clientId: req.user.clientId,
+            sessionExpiry: req.user.sessionExpiry
+          } : null,
+          session: req.session ? {
+            id: req.session.id,
+            cookie: req.session.cookie
+          } : null,
+          headers: {
+            'user-agent': req.get('User-Agent'),
+            'origin': req.get('Origin'),
+            'referer': req.get('Referer')
+          },
+          timestamp: new Date().toISOString()
+        };
+
+        res.json(authStatus);
+      } catch (error) {
+        res.status(500).json({ 
+          message: "Errore nel debug dell'autenticazione",
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
   });
 
   // Endpoint per aggiornare le date di scadenza dei documenti Excel

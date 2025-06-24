@@ -76,8 +76,16 @@ export function sessionTimeoutMiddleware(
 }
 
 export function setupAuth(app: Express) {
+  // --- SECURITY CHECK: SESSION_SECRET obbligatoria e sicura ---
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret || sessionSecret.length < 32) {
+    console.error('❌ CRITICAL SECURITY ERROR: SESSION_SECRET environment variable is required and must be at least 32 characters long!');
+    console.error('   Please set SESSION_SECRET in your environment variables.');
+    console.error('   Example: SESSION_SECRET=your-secure-32-character-key');
+    process.exit(1);
+  }
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "iso-document-manager-secret",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
