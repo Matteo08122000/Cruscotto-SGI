@@ -72,7 +72,8 @@ export default function ResetPasswordPage() {
     setError(null);
 
     try {
-      const res = await fetch('/api/forgot-password', {
+      const baseUrl = import.meta.env.REDIRECT_URI || '';
+      const res = await fetch(`${baseUrl}/api/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

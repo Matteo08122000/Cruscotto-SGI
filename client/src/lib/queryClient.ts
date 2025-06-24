@@ -1,5 +1,27 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+let csrfToken: string | null = null;
+
+async function getCSRFToken(forceRefresh = false): Promise<string> {
+  if (!csrfToken || forceRefresh) {
+    try {
+      const baseUrl = import.meta.env.REDIRECT_URI || '';
+      const response = await fetch(`${baseUrl}/api/csrf-token`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        csrfToken = data.csrfToken;
+      } else {
+        csrfToken = null;
+      }
+    } catch (error) {
+      csrfToken = null;
+    }
+  }
+  return csrfToken || '';
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -13,8 +35,12 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   try {
+    // Forza il refresh del token CSRF per ogni richiesta modificante
+    const csrfToken = await getCSRFToken(["POST", "PUT", "DELETE", "PATCH"].includes(method));
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken,
     };
 
     const res = await fetch(url, {
@@ -24,22 +50,21 @@ export async function apiRequest(
       credentials: "include",
     });
 
-    
     if (res.status === 401) {
-      
       // Tenta di estendere la sessione prima di fallire
       try {
-        const extendResponse = await fetch('/api/extend-session', {
+        const baseUrl = import.meta.env.REDIRECT_URI || '';
+        const extendResponse = await fetch(`${baseUrl}/api/extend-session`, {
           method: 'POST',
           headers: {
             "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
           },
           credentials: 'include'
         });
         
         // Se l'estensione della sessione ha successo, ritenta la richiesta originale
         if (extendResponse.ok) {
-          
           // Ritenta la richiesta originale
           const retryRes = await fetch(url, {
             method,
@@ -53,16 +78,20 @@ export async function apiRequest(
           }
         }
       } catch (retryError) {
-       
+        // Ignora errori di retry
       }
     }
     
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-   
     throw error;
   }
+}
+
+//  Funzione per resettare il token CSRF (utile per logout)
+export function resetCSRFToken() {
+  csrfToken = null;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -78,19 +107,18 @@ export const getQueryFn: <T>(options: {
       
       // Gestione speciale per errori di autenticazione
       if (res.status === 401) {
-        
         // Se l'opzione è returnNull, restituiamo null come richiesto
         if (unauthorizedBehavior === "returnNull") {
           // Prima proviamo a estendere la sessione
           try {
-            const authStatusResponse = await fetch('/api/auth-status', {
+            const baseUrl = import.meta.env.REDIRECT_URI || '';
+            const authStatusResponse = await fetch(`${baseUrl}/api/auth-status`, {
               credentials: 'include'
             });
             
             // Se la risposta auth-status è ok, forse la sessione è stata estesa,
             // quindi ritenta la richiesta originale una volta
             if (authStatusResponse.ok) {
-              
               // Ritenta la richiesta originale
               const retryRes = await fetch(queryKey[0] as string, {
                 credentials: "include",
@@ -101,7 +129,7 @@ export const getQueryFn: <T>(options: {
               }
             }
           } catch (retryError) {
-            
+            // Ignora errori di retry
           }
           
           // Se ancora non ha funzionato, restituisci null come da comportamento richiesto
@@ -112,7 +140,6 @@ export const getQueryFn: <T>(options: {
       await throwIfResNotOk(res);
       return await res.json();
     } catch (error) {
- 
       throw error;
     }
   };

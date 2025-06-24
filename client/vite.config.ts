@@ -11,6 +11,9 @@ export default defineConfig({
       "@assets": path.resolve(__dirname, "..", "attached_assets"),
     },
   },
+  define: {
+    'import.meta.env.REDIRECT_URI': JSON.stringify(process.env.REDIRECT_URI || 'http://localhost:5000'),
+  },
   server: {
     port: 5173,
     proxy: {

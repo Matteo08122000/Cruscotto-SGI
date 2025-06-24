@@ -48,6 +48,9 @@ SESSION_SECRET=your_session_secret_here
 # Crittografia
 ENCRYPTION_KEY=your_encryption_key_here
 
+# CSRF
+CSRF_SECRET=your_csrf_secret
+
 # Google Drive API
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
@@ -117,6 +120,7 @@ NODE_ENV=production
 DB_URI=mongodb://your-production-db
 SESSION_SECRET=your_production_session_secret
 ENCRYPTION_KEY=your_production_encryption_key
+CSRF_SECRET=your_csrf_secret
 GOOGLE_CLIENT_ID=your_production_google_client_id
 GOOGLE_CLIENT_SECRET=your_production_google_client_secret
 GOOGLE_REDIRECT_URI=https://yourdomain.com/api/auth/google/callback
@@ -153,6 +157,7 @@ Il sistema implementa diverse misure di sicurezza:
 - **CORS**: Configurazione sicura per cross-origin requests
 - **Helmet**: Header di sicurezza HTTP
 - **Crittografia**: Crittografia AES per dati sensibili
+- **CSRF Protection**: Protezione contro attacchi Cross-Site Request Forgery
 
 ## 📚 API Documentation
 

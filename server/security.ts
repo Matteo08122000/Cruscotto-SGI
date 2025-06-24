@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { randomBytes } from "crypto";
 
 /**
  * Validazione anti-spam per l'endpoint di contatto
@@ -170,4 +171,68 @@ export function setupSecurity(app: Express) {
       process.exit(1);
     }
   }
+}
+
+// ✅ NUOVO: Middleware CSRF migliorato
+export function setupCSRF(app: Express) {
+  // Genera un token CSRF se non esiste nella sessione.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.session && !(req.session as any).csrfToken) {
+      (req.session as any).csrfToken = randomBytes(32).toString("hex");
+    }
+    next();
+  });
+
+  // Endpoint per fornire il token CSRF al client.
+  app.get("/api/csrf-token", (req: Request, res: Response) => {
+    if (!req.session) {
+      return res.status(500).json({ error: "Sessione non inizializzata" });
+    }
+    if (!(req.session as any).csrfToken) {
+      (req.session as any).csrfToken = randomBytes(32).toString("hex");
+    }
+    res.json({ csrfToken: (req.session as any).csrfToken });
+  });
+
+  // Middleware per la validazione del token CSRF sulle richieste modificanti.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+      const csrfExemptPaths = [
+        "/api/login",
+        "/api/register/admin",
+        "/api/forgot-password",
+        "/api/reset-password",
+        "/api/contact",
+        "/api/sync", // Endpoint di sincronizzazione Google Drive
+        "/api/company-codes/bulk-generate", // Temporaneamente esente per test
+      ];
+
+      if (csrfExemptPaths.some((path) => req.path.startsWith(path))) {
+        return next();
+      }
+
+      if (!req.session || !(req.session as any).csrfToken) {
+        return res
+          .status(403)
+          .json({ message: "Sessione o token CSRF non validi" });
+      }
+
+      const tokenFromHeader = req.headers["x-csrf-token"] as string;
+      const tokenFromBody = req.body?.csrfToken;
+      const sessionToken = (req.session as any).csrfToken;
+
+      if (!tokenFromHeader && !tokenFromBody) {
+        return res
+          .status(403)
+          .json({ message: "Token CSRF mancante nella richiesta" });
+      }
+
+      const providedToken = tokenFromHeader || tokenFromBody;
+
+      if (providedToken !== sessionToken) {
+        return res.status(403).json({ message: "Token CSRF non valido" });
+      }
+    }
+    next();
+  });
 }
