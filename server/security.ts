@@ -177,8 +177,8 @@ export function setupSecurity(app: Express) {
 export function setupCSRF(app: Express) {
   // Genera un token CSRF se non esiste nella sessione.
   app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.session && !req.session.csrfToken) {
-      req.session.csrfToken = randomBytes(32).toString("hex");
+    if (req.session && !(req.session as any).csrfToken) {
+      (req.session as any).csrfToken = randomBytes(32).toString("hex");
     }
     next();
   });
@@ -188,10 +188,10 @@ export function setupCSRF(app: Express) {
     if (!req.session) {
       return res.status(500).json({ error: "Sessione non inizializzata" });
     }
-    if (!req.session.csrfToken) {
-      req.session.csrfToken = randomBytes(32).toString("hex");
+    if (!(req.session as any).csrfToken) {
+      (req.session as any).csrfToken = randomBytes(32).toString("hex");
     }
-    res.json({ csrfToken: req.session.csrfToken });
+    res.json({ csrfToken: (req.session as any).csrfToken });
   });
 
   // Middleware per la validazione del token CSRF sulle richieste modificanti.
@@ -211,7 +211,7 @@ export function setupCSRF(app: Express) {
         return next();
       }
 
-      if (!req.session || !req.session.csrfToken) {
+      if (!req.session || !(req.session as any).csrfToken) {
         return res
           .status(403)
           .json({ message: "Sessione o token CSRF non validi" });
@@ -219,7 +219,7 @@ export function setupCSRF(app: Express) {
 
       const tokenFromHeader = req.headers["x-csrf-token"] as string;
       const tokenFromBody = req.body?.csrfToken;
-      const sessionToken = req.session.csrfToken;
+      const sessionToken = (req.session as any).csrfToken;
 
       if (!tokenFromHeader && !tokenFromBody) {
         return res

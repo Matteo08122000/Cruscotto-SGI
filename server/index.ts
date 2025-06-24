@@ -3,6 +3,8 @@ import * as dotenv from "dotenv";
 import cors from "cors";
 import { mongoStorage } from "./mongo-storage";
 import logger, { logRequest, logError } from "./logger";
+import { setupSecurity, setupCSRF } from "./security";
+import { setupAuth } from "./auth";
 
 logger.info("Avvio server..."); // LOG INIZIALE
 
@@ -39,16 +41,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 if (process.env.NODE_ENV === "production") {
-  const { setupSecurity } = await import("./security");
   setupSecurity(app);
 }
 
 // Inizializza la gestione delle sessioni prima del CSRF.
-const { setupAuth } = await import("./auth");
 setupAuth(app);
 
 // Inizializza la protezione CSRF dopo le sessioni.
-const { setupCSRF } = await import("./security");
 setupCSRF(app);
 
 // ✅ Logging API strutturato
