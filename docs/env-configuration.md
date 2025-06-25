@@ -24,12 +24,12 @@ LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
 ### 3. URL Applicazione (OBBLIGATORIE)
 ```env
 # URL di base del backend (es. http://localhost:5000 o https://dominio.com)
-REDIRECT_URI=http://localhost:5000
+VITE_API_BASE_URL=http://localhost:5000
 # URL del frontend (es. http://localhost:5173 o https://dominio.com)
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **Nota:** `REDIRECT_URI` è fondamentale per il corretto funzionamento dell'autenticazione Google OAuth. Se non impostata correttamente, il callback `/api/google/callback` fallirà e l'accesso tramite Google non funzionerà.
+> **Nota:** `VITE_API_BASE_URL` è fondamentale per il corretto funzionamento dell'autenticazione Google OAuth. Se non impostata correttamente, il callback `/api/google/callback` fallirà e l'accesso tramite Google non funzionerà.
 
 ## Generazione Chiavi Sicure
 
@@ -65,7 +65,7 @@ ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456789
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 
 # URL Applicazione
-REDIRECT_URI=http://localhost:5000
+VITE_API_BASE_URL=http://localhost:5000
 FRONTEND_URL=http://localhost:5173
 
 # Environment
@@ -88,7 +88,7 @@ npm run check-env
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+GOOGLE_VITE_API_BASE_URL=http://localhost:3000/auth/google/callback
 ```
 
 ### Email (SMTP)
@@ -117,4 +117,16 @@ SMTP_PASSWORD=your-app-password
 ### Errore: "Missing script: dev"
 - Esegui `npm install` per installare le dipendenze
 - Verifica di essere nella directory `server/`
-- Controlla che `package.json` contenga lo script `dev` 
+- Controlla che `package.json` contenga lo script `dev`
+
+## Variabili d'Ambiente per il Client (Frontend)
+
+Nel file `client/.env` aggiungi:
+
+```
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+- In produzione, imposta l'URL reale del backend (es: `https://api.tuodominio.com`).
+- Tutte le fetch e chiamate API dal frontend usano questa variabile come prefisso.
+- Non usare mai endpoint hardcodati nelle fetch. 

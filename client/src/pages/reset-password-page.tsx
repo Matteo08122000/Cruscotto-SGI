@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
     setError(null);
 
     try {
-      const baseUrl = import.meta.env.REDIRECT_URI || '';
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
       const res = await fetch(`${baseUrl}/api/forgot-password`, {
         method: 'POST',
         headers: {

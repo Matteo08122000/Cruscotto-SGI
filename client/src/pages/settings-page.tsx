@@ -153,8 +153,9 @@ export default function SettingsPage() {
         });
 
         // Attendi 3 secondi per consentire all'utente di vedere il messaggio, poi esegui logout
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
         setTimeout(() => {
-          fetch("/api/logout", {
+          fetch(`${baseUrl}/api/logout`, {
             method: "POST",
             credentials: "include",
           })
@@ -163,7 +164,6 @@ export default function SettingsPage() {
               window.location.href = "/auth";
             })
             .catch((err) => {
-              
               // In caso di errore, reindirizza comunque alla pagina di login
               window.location.href = "/auth";
             });

@@ -166,7 +166,7 @@ DB_URI=mongodb://localhost:27017/documentiiso_dev
 # Google Drive API
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
+GOOGLE_VITE_API_BASE_URL=http://localhost:5000/auth/google/callback
 
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com
@@ -179,7 +179,7 @@ SESSION_SECRET=your_session_secret_here
 CSRF_SECRET=your_csrf_secret_here
 
 # URL Applicazione (OBBLIGATORIE)
-REDIRECT_URI=http://localhost:5000
+VITE_API_BASE_URL=http://localhost:5000
 FRONTEND_URL=http://localhost:5173
 
 # Environment
@@ -197,7 +197,7 @@ DB_URI=mongodb://your_production_db_uri
 # Google Drive API
 GOOGLE_CLIENT_ID=your_production_client_id
 GOOGLE_CLIENT_SECRET=your_production_client_secret
-GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
+GOOGLE_VITE_API_BASE_URL=https://yourdomain.com/auth/google/callback
 
 # Email
 SMTP_HOST=your_smtp_host
@@ -210,7 +210,7 @@ SESSION_SECRET=your_production_session_secret
 CSRF_SECRET=your_production_csrf_secret
 
 # URL Applicazione (OBBLIGATORIE)
-REDIRECT_URI=https://yourdomain.com
+VITE_API_BASE_URL=https://yourdomain.com
 FRONTEND_URL=https://yourdomain.com
 
 # Environment
@@ -1807,3 +1807,27 @@ git push origin feature/nuova-funzionalita
 ---
 
 **DocumentiIso** - Gestione documentale intelligente e sicura 
+
+### Chiamate API dal frontend
+
+Tutte le chiamate API dal frontend devono usare la variabile d'ambiente `VITE_API_BASE_URL` come prefisso. Esempio:
+
+```js
+const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+fetch(`${baseUrl}/api/route`, ...);
+```
+
+Oppure, preferibilmente, usa la funzione centralizzata:
+
+```js
+import { apiRequest } from '../lib/queryClient';
+const res = await apiRequest('POST', '/api/login', dati);
+```
+
+**Non usare mai endpoint hardcodati** (tipo `/api/...` senza prefisso) nelle fetch.
+
+#### Gestione CSRF
+
+La protezione CSRF è attiva e centralizzata: tutte le chiamate API che modificano dati (POST, PUT, DELETE, PATCH) aggiungono automaticamente il token CSRF tramite la funzione `apiRequest`.
+
+Non serve aggiungere manualmente il token nelle fetch: basta usare le funzioni già presenti. 

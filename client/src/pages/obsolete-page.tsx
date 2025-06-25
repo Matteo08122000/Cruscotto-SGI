@@ -208,13 +208,10 @@ export default function ObsoletePage() {
                           <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
                             Data Archiviazione
                           </th>
-                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
-                            Azioni
-                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedDocuments.map((doc) => (
+                        {(paginatedDocuments || []).map((doc) => (
                           <tr
                             key={doc.legacyId}
                             className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -228,18 +225,6 @@ export default function ObsoletePage() {
                                     "it-IT"
                                   )
                                 : "N/A"}
-                            </td>
-                            <td className="py-3 px-4">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="flex items-center text-xs"
-                                onClick={() => handleRestore(doc.legacyId)}
-                                disabled={restoreMutation.isPending}
-                              >
-                                <ArchiveRestore className="mr-1 h-3.5 w-3.5" />
-                                Ripristina
-                              </Button>
                             </td>
                           </tr>
                         ))}

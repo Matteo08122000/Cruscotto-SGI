@@ -124,7 +124,10 @@ export default function DocumentPage() {
   });
 
   const syncMutation = useMutation({
-    mutationFn: () => fetch("/api/sync", { method: "POST" }),
+    mutationFn: () => {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      return fetch(`${baseUrl}/api/sync`, { method: "POST" });
+    },
     onSuccess: () => {
       toast({
         title: "Sincronizzazione avviata",

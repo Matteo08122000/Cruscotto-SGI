@@ -7,12 +7,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      '@shared': path.resolve(__dirname, '..', 'shared-types'),
+      "@shared": path.resolve(__dirname, "..", "shared-types"),
       "@assets": path.resolve(__dirname, "..", "attached_assets"),
     },
-  },
-  define: {
-    'import.meta.env.REDIRECT_URI': JSON.stringify(process.env.REDIRECT_URI || 'http://localhost:5000'),
   },
   server: {
     port: 5173,
@@ -25,7 +22,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "dist", // dentro client/
+    outDir: "dist",
     emptyOutDir: true,
   },
 });

@@ -5,7 +5,7 @@ let csrfToken: string | null = null;
 async function getCSRFToken(forceRefresh = false): Promise<string> {
   if (!csrfToken || forceRefresh) {
     try {
-      const baseUrl = import.meta.env.REDIRECT_URI || '';
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
       const response = await fetch(`${baseUrl}/api/csrf-token`, {
         credentials: 'include'
       });
@@ -53,7 +53,7 @@ export async function apiRequest(
     if (res.status === 401) {
       // Tenta di estendere la sessione prima di fallire
       try {
-        const baseUrl = import.meta.env.REDIRECT_URI || '';
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
         const extendResponse = await fetch(`${baseUrl}/api/extend-session`, {
           method: 'POST',
           headers: {
@@ -111,7 +111,7 @@ export const getQueryFn: <T>(options: {
         if (unauthorizedBehavior === "returnNull") {
           // Prima proviamo a estendere la sessione
           try {
-            const baseUrl = import.meta.env.REDIRECT_URI || '';
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
             const authStatusResponse = await fetch(`${baseUrl}/api/auth-status`, {
               credentials: 'include'
             });

@@ -12,7 +12,7 @@ function buildOAuthClient() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID!,
     process.env.GOOGLE_CLIENT_SECRET!,
-    `${process.env.REDIRECT_URI}/api/google/callback`
+    `${process.env.API_BASE_URL}/api/google/callback`
   );
 }
 
@@ -45,9 +45,9 @@ export async function googleAuth(req: Request, res: Response) {
 
   const authUrl = buildOAuthClient().generateAuthUrl({
     access_type: "offline",
+    prompt: "consent",
     scope: ["https://www.googleapis.com/auth/drive.readonly"],
     state: String(clientId),
-    ...(hasRefresh ? {} : { prompt: "consent" }),
   });
 
   res.redirect(authUrl);
@@ -57,6 +57,7 @@ export async function googleAuth(req: Request, res: Response) {
 /* STEP 2 – Callback da Google                                                */
 /* -------------------------------------------------------------------------- */
 export async function googleAuthCallback(req: Request, res: Response) {
+  console.log(">>> CALLBACK CHIAMATO <<<", req.query);
   const { code, state } = req.query;
   if (!code || !state) return res.status(400).send("Dati mancanti nella query");
 
@@ -66,10 +67,12 @@ export async function googleAuthCallback(req: Request, res: Response) {
 
   try {
     const { tokens } = await buildOAuthClient().getToken(String(code));
+    console.log(">>> TOKENS RICEVUTI <<<", tokens);
 
     if (!tokens.refresh_token) {
       const existing = await mongoStorage.getClient(clientId);
       if (existing?.google?.refreshToken) {
+        console.log(">>> INVIO successHtml <<< (refresh_token già presente)");
         return res.send(successHtml());
       }
 
@@ -127,6 +130,7 @@ export async function googleAuthCallback(req: Request, res: Response) {
       });
     }
 
+    console.log(">>> INVIO successHtml <<<");
     res.send(successHtml());
   } catch (err) {
     // Errore che andrebbe loggato centralmente.

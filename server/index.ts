@@ -20,7 +20,7 @@ const app = express();
 // ✅ CORS config
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:5173","http://localhost:5174"];
+  : ["http://localhost:5173"];
 
 app.use(
   cors({

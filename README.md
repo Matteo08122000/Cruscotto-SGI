@@ -54,7 +54,7 @@ CSRF_SECRET=your_csrf_secret
 # Google Drive API
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+GOOGLE_VITE_API_BASE_URL=http://localhost:5000/api/auth/google/callback
 
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com
@@ -123,7 +123,7 @@ ENCRYPTION_KEY=your_production_encryption_key
 CSRF_SECRET=your_csrf_secret
 GOOGLE_CLIENT_ID=your_production_google_client_id
 GOOGLE_CLIENT_SECRET=your_production_google_client_secret
-GOOGLE_REDIRECT_URI=https://yourdomain.com/api/auth/google/callback
+GOOGLE_VITE_API_BASE_URL=https://yourdomain.com/api/auth/google/callback
 SMTP_HOST=your_smtp_host
 SMTP_PORT=587
 SMTP_USER=your_smtp_user
@@ -255,3 +255,21 @@ Per supporto e domande:
 - ✅ Interfaccia utente moderna
 - ✅ Sistema di autenticazione
 - ✅ Rate limiting e sicurezza
+
+## 🌐 Configurazione variabili d'ambiente frontend
+
+Nel file `client/.env` aggiungi:
+
+```
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+- In produzione, imposta il valore con l'URL reale del backend (es: `https://api.tuodominio.com`).
+- Tutte le chiamate API dal frontend usano sempre questa variabile come prefisso.
+- La gestione del CSRF token è centralizzata e automatica: non serve aggiungere manualmente il token nelle fetch, basta usare le funzioni già presenti (`apiRequest`).
+
+## 🔒 Sicurezza fetch e CSRF
+
+- Tutte le fetch e le chiamate API dal frontend sono centralizzate e usano sempre il prefisso `VITE_API_BASE_URL`.
+- Non usare mai endpoint hardcodati (tipo `/api/...` senza prefisso) nelle fetch.
+- La protezione CSRF è attiva e gestita automaticamente dal frontend.

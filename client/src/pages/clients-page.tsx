@@ -192,7 +192,8 @@ export default function ClientsPage() {
   const connectGoogleDrive = async (clientId: number) => {
     setIsConnecting(true);
     try {
-      const res = await fetch(`/api/google/auth-url/${clientId}`);
+      const baseUrl = import.meta.env.API_BASE_URL || '';
+      const res = await fetch(`${baseUrl}/api/google/auth-url/${clientId}`);
       const data = await res.json();
       window.open(data.url, "_blank");
     } catch (error) {
@@ -230,8 +231,9 @@ export default function ClientsPage() {
     
     const checkSyncStatus = async () => {
       try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
         // Verifica lo stato della sincronizzazione
-        const response = await fetch("/api/sync/status", {
+        const response = await fetch(`${baseUrl}/api/sync/status`, {
           credentials: "include",
         });
         

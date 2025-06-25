@@ -114,7 +114,8 @@ export default function HomePage() {
     mutationFn: async () => {
       setSyncProgress(prev => ({ ...prev, isSyncing: true, error: undefined }));
       
-      const response = await fetch("/api/sync", {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${baseUrl}/api/sync`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -206,15 +207,23 @@ export default function HomePage() {
     }
   };
 
-  // Applica il calcolo dinamico dell'alertStatus ai documenti
+  // Applica il calcolo dinamico dell'alertStatus ai documenti attivi
   const documentsWithDynamicStatus = useMemo(() => {
     if (!documents) return [];
-    
     return documents.map(doc => ({
       ...doc,
       alertStatus: calculateDynamicAlertStatus(doc.expiryDate)
     }));
   }, [documents]);
+
+  // Applica il calcolo dinamico dell'alertStatus ai documenti obsoleti
+  const obsoleteDocumentsWithDynamicStatus = useMemo(() => {
+    if (!obsoleteDocs) return [];
+    return obsoleteDocs.map(doc => ({
+      ...doc,
+      alertStatus: calculateDynamicAlertStatus(doc.expiryDate)
+    }));
+  }, [obsoleteDocs]);
   
   // Simula il progresso della sincronizzazione
   const simulateSyncProgress = () => {
@@ -258,44 +267,43 @@ export default function HomePage() {
   /* -----------------------------------------------------------
    * FILTER – lista principale
    * --------------------------------------------------------- */
-  const filteredDocuments = documentsWithDynamicStatus?.filter((doc) => {
-    // Filtro per ricerca testuale
-    const matchesSearch = doc.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Filtro per stato
-    let matchesStatus = true;
-    if (statusFilter === "all") {
-      matchesStatus = true;
-    } else if (statusFilter === "obsolete") {
-      matchesStatus = doc.isObsolete === true;
-    } else if (statusFilter === "active") {
-      // Documenti validi: non obsoleti e con alertStatus "none", "valid", o "active"
-      matchesStatus = !doc.isObsolete && (
-        doc.alertStatus === "none" || 
-        doc.alertStatus === "valid" || 
-        doc.alertStatus === "active"
-      );
+  const filteredDocuments = useMemo(() => {
+    // Mostra solo documenti attivi (non obsoleti), tranne se filtro 'obsolete'
+    if (statusFilter === "obsolete") {
+      return obsoleteDocumentsWithDynamicStatus.filter((doc) => {
+        const matchesSearch = doc.title?.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesSearch;
+      });
     } else {
-      // Per gli altri stati (warning, expired), considera solo documenti non obsoleti
-      matchesStatus = !doc.isObsolete && doc.alertStatus?.toLowerCase() === statusFilter.toLowerCase();
+      return documentsWithDynamicStatus.filter((doc) => {
+        if (doc.isObsolete) return false;
+        const matchesSearch = doc.title?.toLowerCase().includes(searchTerm.toLowerCase());
+        let matchesStatus = true;
+        if (statusFilter === "all") {
+          matchesStatus = true;
+        } else if (statusFilter === "active") {
+          matchesStatus = doc.alertStatus === "none" || doc.alertStatus === "valid" || doc.alertStatus === "active";
+        } else {
+          matchesStatus = doc.alertStatus?.toLowerCase() === statusFilter.toLowerCase();
+        }
+        return matchesSearch && matchesStatus;
+      });
     }
-    
-    return matchesSearch && matchesStatus;
-  }) ?? [];
+  }, [documentsWithDynamicStatus, obsoleteDocumentsWithDynamicStatus, searchTerm, statusFilter]);
 
   /* -----------------------------------------------------------
    * STATS – dashboard
    * --------------------------------------------------------- */
   const stats = useMemo(() => {
     const activeDocs = documentsWithDynamicStatus?.filter((d) => !d.isObsolete);
-    const obsoleteDocs = documentsWithDynamicStatus?.filter((d) => d.isObsolete);
+    const obsoleteDocsCount = obsoleteDocumentsWithDynamicStatus?.length || 0;
     return {
       total: activeDocs?.length || 0,
       expiringSoon: activeDocs?.filter((d) => d.alertStatus === "warning").length || 0,
       expired: activeDocs?.filter((d) => d.alertStatus === "expired").length || 0,
-      obsolete: obsoleteDocs?.length || 0,
+      obsolete: obsoleteDocsCount,
     };
-  }, [documentsWithDynamicStatus]);
+  }, [documentsWithDynamicStatus, obsoleteDocumentsWithDynamicStatus]);
 
   /* -----------------------------------------------------------
    * HANDLERS

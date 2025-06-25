@@ -1057,6 +1057,16 @@ async function processBatchWithAnalysis(
         });
       }
 
+      // NEW: Mark obsolete previous revisions after create/update
+      const obsolete = await findObsoleteRevisions(
+        docInfo.path,
+        docInfo.title,
+        docInfo.revision
+      );
+      if (obsolete.length > 0) {
+        await markObsoleteDocuments(obsolete, userId);
+      }
+
       result.processed++;
       
       if (onProgress) {
