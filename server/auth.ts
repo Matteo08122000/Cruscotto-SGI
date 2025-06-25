@@ -90,11 +90,12 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // Default a 24 ore
       httpOnly: true,
-      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
     },
+    
   };
 
   if (process.env.NODE_ENV === "production") {
