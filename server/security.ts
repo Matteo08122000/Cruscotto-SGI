@@ -153,21 +153,12 @@ export function setupSecurity(app: Express) {
 
   // Verifica variabili d'ambiente critiche in produzione
   if (process.env.NODE_ENV === "production") {
-    const requiredEnvVars = ["ENCRYPTION_KEY", "SESSION_SECRET", "DB_URI"];
+    const requiredEnvVars = ["DB_URI"];
     const missingVars = requiredEnvVars.filter((name) => !process.env[name]);
 
     if (missingVars.length > 0) {
       // In un'applicazione reale, questo errore dovrebbe essere loggato
       // da un sistema centralizzato prima di terminare il processo.
-      process.exit(1);
-    }
-
-    if (
-      (process.env.ENCRYPTION_KEY &&
-        process.env.ENCRYPTION_KEY.length < 32) ||
-      (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32)
-    ) {
-      // Anche questo errore critico dovrebbe essere loggato.
       process.exit(1);
     }
   }

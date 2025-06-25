@@ -19,8 +19,6 @@ export interface DocumentDocument {
   expiryDate: Date | null;
   parentId: number | null;
   isObsolete: boolean;
-  fileHash: string | null;
-  encryptedCachePath: string | null;
   ownerId: number | null;
   clientId: number | null;
   createdAt: Date | null;
@@ -38,8 +36,6 @@ export interface InsertDocumento {
   expiryDate?: Date | null; 
   parentId?: number | null;
   isObsolete?: boolean;
-  fileHash?: string | null;
-  encryptedCachePath?: string | null;
   clientId?: number;
   ownerId?: number;
   createdAt: Date | null;

@@ -21,8 +21,6 @@ export const insertDocumentSchema = z.object({
   alertStatus: z.string().nullable(),
   parentId: z.number().nullable(),
   isObsolete: z.boolean().nullable(),
-  fileHash: z.string().nullable(),
-  encryptedCachePath: z.string().nullable(),
   expiryDate: z.date().nullable(),
   warningDays: z.number().optional(),
   clientId: z.number().nullable().optional(),
@@ -81,8 +79,6 @@ export const documentSchema = z.object({
   expiryDate: z.date().nullable().optional(),
   parentId: z.number().nullable().optional(),
   isObsolete: z.boolean().optional().default(false),
-  fileHash: z.string().nullable().optional(),
-  encryptedCachePath: z.string().nullable().optional(),
   clientId: z.number().optional(),
   ownerId: z.number().optional(),
 });

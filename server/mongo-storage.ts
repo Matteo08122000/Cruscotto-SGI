@@ -22,12 +22,6 @@ import {
   getNextSequence,
   Counter, // Importato per la gestione dei backup/restore
 } from "./models/mongoose-models";
-import {
-  hashFile,
-  encryptFile,
-  decryptFile,
-  verifyFileIntegrity,
-} from "./crypto";
 import path from "path";
 import fs from "fs";
 import session from "express-session";
@@ -739,92 +733,6 @@ export class MongoStorage implements IStorage {
     return DocumentModel.find({ isObsolete: true }).lean().exec() as Promise<
       Document[]
     >;
-  }
-
-  public async hashAndEncryptDocument(
-    id: number,
-    filePath: string
-  ): Promise<Document | undefined> {
-    try {
-      const cacheDir = path.join(process.cwd(), "encrypted_cache");
-      await fs.promises.mkdir(cacheDir, { recursive: true });
-      const encryptedPath = path.join(
-        cacheDir,
-        `doc_${id}_${path.basename(filePath)}.enc`
-      );
-      const fileHash = await hashFile(filePath);
-      await encryptFile(filePath, encryptedPath);
-      return await this.updateDocument(id, { fileHash, encryptedCachePath: encryptedPath });
-    } catch (error) {
-      return this.getDocument(id);
-    }
-  }
-
-  public async verifyDocumentIntegrity(id: number): Promise<boolean> {
-    try {
-      const document = await this.getDocument(id);
-      if (
-        !document ||
-        !document.fileHash ||
-        !document.encryptedCachePath ||
-        !fs.existsSync(document.encryptedCachePath)
-      ) {
-        return false;
-      }
-      const tempDir = path.join(process.cwd(), "temp");
-      await fs.promises.mkdir(tempDir, { recursive: true });
-      const tempFilePath = path.join(tempDir, `verify_${id}_${Date.now()}`);
-      await decryptFile(document.encryptedCachePath, tempFilePath);
-      const isValid = await verifyFileIntegrity(
-        tempFilePath,
-        document.fileHash
-      );
-      await fs.promises.unlink(tempFilePath);
-      return isValid;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  public async validateFileUpload(
-    filePath: string,
-    fileSize: number,
-    mimeType: string
-  ): Promise<{ valid: boolean; errors?: string[] }> {
-    const errors: string[] = [];
-    const MAX_SIZE = 20 * 1024 * 1024;
-    if (fileSize > MAX_SIZE) {
-      errors.push(
-        `Il file è troppo grande. Dimensione massima: ${
-          MAX_SIZE / (1024 * 1024)
-        }MB`
-      );
-    }
-    const allowedMimeTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "text/plain",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "image/jpeg",
-      "image/png",
-    ];
-    if (!allowedMimeTypes.includes(mimeType)) {
-      errors.push("Tipo di file non supportato.");
-    }
-    const filename = path.basename(filePath);
-    const isoPattern =
-      /^\d+(?:\.\d+)*_[\p{L}\p{N} .,'()\-\u2019]+_Rev\.\d+_\d{4}-\d{2}-\d{2}\.[A-Za-z]+$/u;
-    if (!isoPattern.test(filename)) {
-      errors.push("Il nome del file non segue lo standard ISO richiesto.");
-    }
-    return {
-      valid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
-    };
   }
 
   // Metodo per pulire le risorse quando necessario

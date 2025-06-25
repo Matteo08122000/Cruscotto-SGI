@@ -3,12 +3,6 @@ import createMemoryStore from "memorystore";
 import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
-import {
-  encryptFile,
-  decryptFile,
-  hashFile,
-  verifyFileIntegrity,
-} from "./crypto";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -68,10 +62,6 @@ export interface IStorage {
     document: Partial<InsertDocument>
   ): Promise<Document | undefined>;
   markDocumentObsolete(id: number): Promise<Document | undefined>;
-  hashAndEncryptDocument(
-    id: number,
-    filePath: string
-  ): Promise<Document | undefined>;
   verifyDocumentIntegrity(id: number): Promise<boolean>;
   validateFileUpload(
     filePath: string,
@@ -495,8 +485,6 @@ export class MemStorage implements IStorage {
       updatedAt,
       parentId: insertDocument.parentId ?? null,
       isObsolete: insertDocument.isObsolete || false,
-      fileHash: insertDocument.fileHash || null,
-      encryptedCachePath: insertDocument.encryptedCachePath || null,
       clientId:
         insertDocument.clientId === undefined ? null : insertDocument.clientId,
       ownerId: insertDocument.ownerId ?? null,
@@ -533,27 +521,6 @@ export class MemStorage implements IStorage {
     };
     this.documents.set(id, updatedDocument);
     return updatedDocument;
-  }
-
-  async hashAndEncryptDocument(
-    id: number,
-    filePath: string
-  ): Promise<Document | undefined> {
-    try {
-      const doc = await this.getDocument(id);
-      if (!doc) throw new Error("Documento non trovato");
-
-      const fileHash = await hashFile(filePath);
-      const encryptedCachePath = await encryptFile(
-        filePath,
-        this.getEncryptedCachePath(doc)
-      );
-
-      return await this.updateDocument(id, { fileHash, encryptedCachePath });
-    } catch (error) {
-      // In un'app reale, questo errore verrebbe loggato
-      return undefined;
-    }
   }
 
   async verifyDocumentIntegrity(id: number): Promise<boolean> {
@@ -830,10 +797,6 @@ export class MemStorage implements IStorage {
         error instanceof Error ? error.message : "Errore sconosciuto";
       return { success: false, error: errorMessage };
     }
-  }
-
-  private getEncryptedCachePath(doc: Document): string {
-    // ... existing code ...
   }
 }
 

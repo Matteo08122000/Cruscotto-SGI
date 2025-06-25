@@ -9,8 +9,6 @@ export const insertDocumentSchema = z.object({
   alertStatus: z.string().nullable(),
   parentId: z.number().nullable(),
   isObsolete: z.boolean().nullable(),
-  fileHash: z.string().nullable(),
-  encryptedCachePath: z.string().nullable(),
   expiryDate: z.date().nullable(),
   warningDays: z.number().optional(),
   clientId: z.number().nullable().optional(),

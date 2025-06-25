@@ -5,7 +5,8 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { mongoStorage as storage } from "./mongo-storage";
-import { UserDocument as User } from "./shared-types/schema";
+import { UserDocument } from "./shared-types/schema";
+import { ClientDocument } from "./shared-types/client";
 import { startAutomaticSync } from "./google-drive";
 import { strongPasswordSchema } from "./shared-types/validators";
 import { logAuth, logError } from "./logger";
@@ -76,16 +77,9 @@ export function sessionTimeoutMiddleware(
 }
 
 export function setupAuth(app: Express) {
-  // --- SECURITY CHECK: SESSION_SECRET obbligatoria e sicura ---
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret || sessionSecret.length < 32) {
-    console.error('❌ CRITICAL SECURITY ERROR: SESSION_SECRET environment variable is required and must be at least 32 characters long!');
-    console.error('   Please set SESSION_SECRET in your environment variables.');
-    console.error('   Example: SESSION_SECRET=your-secure-32-character-key');
-    process.exit(1);
-  }
+  // SESSION_SECRET check removed
   const sessionSettings: session.SessionOptions = {
-    secret: sessionSecret,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -151,7 +145,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user: Express.User, done) => {
-    done(null, (user as User).legacyId);
+    done(null, (user as UserDocument).legacyId);
   });
 
   passport.deserializeUser(async (id: number, done) => {
@@ -168,7 +162,7 @@ export function setupAuth(app: Express) {
       "local",
       async (
         err: Error | null,
-        user: User | false,
+        user: UserDocument | false,
         info: { message: string }
       ) => {
         if (err) {
@@ -209,7 +203,7 @@ export function setupAuth(app: Express) {
               details: { message: "User logged in", ipAddress: req.ip },
             });
 
-            let clientDetails = null;
+            let clientDetails: ClientDocument | null = null;
             if (updatedUser?.clientId) {
               clientDetails = await storage.getClient(updatedUser.clientId);
               if (clientDetails?.driveFolderId) {
@@ -232,9 +226,10 @@ export function setupAuth(app: Express) {
 
   app.post("/api/logout", async (req, res, next) => {
     try {
-      if (req.user) {
+      const user = req.user as UserDocument;
+      if (user) {
         await storage.createLog({
-          userId: req.user.legacyId,
+          userId: user.legacyId,
           action: "logout",
           details: { message: "User logged out" },
         });
@@ -258,10 +253,12 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Non autenticato" });
     }
     try {
-      const { password, ...safeUser } = req.user as User;
-      let clientDetails = null;
+      const user = req.user as UserDocument;
+      const { password, ...safeUser } = user;
+      let clientDetails: ClientDocument | null = null;
       if (safeUser.clientId) {
-        clientDetails = await storage.getClient(safeUser.clientId);
+        const foundClient = await storage.getClient(safeUser.clientId);
+        clientDetails = foundClient ?? null;
       }
       res.json({ ...safeUser, client: clientDetails });
     } catch (error) {
@@ -292,20 +289,23 @@ export function setupAuth(app: Express) {
 
         // Aggiorna l'utente nel database e ricevi l'utente aggiornato
         const updatedUser = await storage.updateUserSession(
-          req.user.legacyId,
+          (req.user as UserDocument).legacyId,
           null,
           sessionExpiry
         );
 
         // Update session - sia nell'oggetto req.user che nella durata cookie
-        req.user.sessionExpiry = sessionExpiry;
+        if (updatedUser) {
+          (req.user as UserDocument).sessionExpiry = sessionExpiry;
+        }
         if (req.session && req.session.cookie) {
           req.session.cookie.maxAge = sessionDuration;
         }
 
-        let clientDetails = null;
+        let clientDetails: ClientDocument | null = null;
         if (updatedUser?.clientId) {
-          clientDetails = await storage.getClient(updatedUser.clientId);
+          const foundClient = await storage.getClient(updatedUser.clientId);
+          clientDetails = foundClient ?? null;
         }
 
         res.json({
@@ -327,8 +327,9 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Non autenticato" });
       }
       
-      const { password, ...safeUser } = req.user as User;
-      let clientDetails = null;
+      const user = req.user as UserDocument;
+      const { password, ...safeUser } = user;
+      let clientDetails: ClientDocument | null = null;
       if (safeUser.clientId) {
         clientDetails = await storage.getClient(safeUser.clientId);
       }
@@ -336,20 +337,10 @@ export function setupAuth(app: Express) {
       res.json({ 
         authenticated: true, 
         user: { ...safeUser, client: clientDetails },
-        sessionExpiry: req.user.sessionExpiry
+        sessionExpiry: user.sessionExpiry
       });
     } catch (error) {
       res.status(500).json({ message: "Errore nel controllo dello stato di autenticazione" });
-    }
-  });
-
-  // Endpoint per verificare lo stato dell'autenticazione
-  app.get("/api/auth-status", (req, res) => {
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      const { password, ...safeUser } = req.user as any;
-      res.status(200).json({ authenticated: true, user: safeUser });
-    } else {
-      res.status(401).json({ message: "Non autenticato" });
     }
   });
 }

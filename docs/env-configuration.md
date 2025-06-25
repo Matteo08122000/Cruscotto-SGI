@@ -11,12 +11,6 @@ DB_URI=mongodb://localhost:27017/isodocument
 
 ### 2. Chiavi di Sicurezza (CRITICHE)
 ```env
-# Chiave per le sessioni utente (min 32 caratteri)
-SESSION_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
-
-# Chiave per la crittografia dei documenti (min 32 caratteri)
-ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
-
 # Chiave per i link sicuri (min 32 caratteri) - OBBLIGATORIA
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 ```
@@ -60,8 +54,6 @@ Crea un file `.env` nella directory `server/` con il contenuto:
 DB_URI=mongodb://localhost:27017/isodocument
 
 # Security Keys
-SESSION_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
-ENCRYPTION_KEY=b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
 LINK_SECRET_KEY=c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890ab
 
 # URL Applicazione

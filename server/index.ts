@@ -76,12 +76,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// Handler globale per tutte le API non trovate (risponde sempre in JSON)
-app.use("/api", (req, res) => {
-  res.status(404).json({ message: "API route not found" });
-});
-
 (async () => {
   try {
     logger.info("Connessione a MongoDB...");
@@ -101,6 +95,11 @@ app.use("/api", (req, res) => {
     logger.info("Registro le route di backup...");
     const { registerBackupRoutes } = await import("./backup-routes");
     registerBackupRoutes(app);
+
+    // Sposta qui il catch-all 404 per /api
+    app.use("/api", (req, res) => {
+      res.status(404).json({ message: "API route not found" });
+    });
 
     // ✅ Middleware per gestione errori centralizzata
     app.use((err: any, req: Request, res: Response, next: NextFunction) => {

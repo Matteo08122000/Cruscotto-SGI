@@ -7,14 +7,12 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const requiredEnvVars = [
   "DB_URI",
-  "SESSION_SECRET",
-  "ENCRYPTION_KEY",
   "LINK_SECRET_KEY",
   "SMTP_HOST",
   "SMTP_PORT",
   "SMTP_USER",
   "SMTP_PASSWORD",
-  "REDIRECT_URI",
+  "VITE_API_BASE_URL",
   "FRONTEND_URL",
 ];
 

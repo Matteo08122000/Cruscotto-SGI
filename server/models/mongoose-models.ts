@@ -40,8 +40,6 @@ export interface DocumentDocument extends mongoose.Document {
   expiryDate: Date | null;  
   parentId: number | null;
   isObsolete: boolean | null;
-  fileHash: string | null;
-  encryptedCachePath: string | null;
   clientId: number | null; 
   ownerId: number | null;
   createdAt: Date | null;
@@ -61,8 +59,6 @@ const documentSchema = new Schema<DocumentDocument>({
   expiryDate: { type: Date, default: null }, 
   parentId: { type: Number, default: null },
   isObsolete: { type: Boolean, default: false },
-  fileHash: { type: String, default: null },
-  encryptedCachePath: { type: String, default: null },
   clientId: { type: Number, default: null }, 
   ownerId: { type: Number, default: null },
   createdAt: { type: Date, default: Date.now },
@@ -82,8 +78,6 @@ export interface InsertDocument {
   expiryDate?: Date | null; 
   parentId?: number | null;
   isObsolete?: boolean;
-  fileHash?: string | null;
-  encryptedCachePath?: string | null;
   clientId?: number;
   ownerId?: number;
 }
