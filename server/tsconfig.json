@@ -3,8 +3,8 @@
   "compilerOptions": {
     "lib": ["ESNext"],
     "types": ["node"],
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist"
   },
-  "include": ["src"]
+  "include": ["*.ts", "src", "shared-types", "models", "scripts"]
 }

@@ -18,11 +18,9 @@ if (process.env.NODE_ENV === "production") {
 const app = express();
 
 // ✅ CORS config
-const allowedOrigins = [
-  'https://cruscottosgi.it',
-  'https://www.cruscottosgi.it',
-  'https://cruscotto-sgi-1.onrender.com'
-];
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+  : ["http://localhost:5173"];
 
 app.use(
   cors({
@@ -95,11 +93,6 @@ app.use((req, res, next) => {
     logger.info("Registro le route di backup...");
     const { registerBackupRoutes } = await import("./backup-routes");
     registerBackupRoutes(app);
-
-    // Sposta qui il catch-all 404 per /api
-    app.use("/api", (req, res) => {
-      res.status(404).json({ message: "API route not found" });
-    });
 
     // ✅ Middleware per gestione errori centralizzata
     app.use((err: any, req: Request, res: Response, next: NextFunction) => {

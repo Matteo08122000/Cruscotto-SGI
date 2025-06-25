@@ -1118,6 +1118,499 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Endpoint per crittografare e verificare l'integrità di un documento
+  app.post("/api/documents/:id/encrypt", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.legacyId, 10);
+      const { filePath } = req.body;
+
+      if (!filePath) {
+        return res.status(400).json({ message: "Percorso del file richiesto" });
+      }
+
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ message: "Documento non trovato" });
+      }
+
+      // Validazione: il file deve essere sotto la directory document.path (relativa alla root dei documenti)
+      const documentsRoot = path.resolve(process.cwd(), "documents");
+      const documentDir = path.resolve(documentsRoot, document.path);
+      const requestedFile = path.resolve(filePath);
+      if (!requestedFile.startsWith(documentDir + path.sep)) {
+        return res.status(400).json({ message: "Accesso al file non consentito: il file deve essere sotto la directory del documento." });
+      }
+      // Protezione path traversal
+      if (path.relative(documentDir, requestedFile).includes("..")) {
+        return res.status(400).json({ message: "Path traversal non consentito." });
+      }
+
+      const updatedDocument = await storage.hashAndEncryptDocument(
+        id,
+        requestedFile
+      );
+
+      if (req.user && updatedDocument && updatedDocument.encryptedCachePath) {
+        await storage.createLog({
+          userId: req.user.legacyId,
+          action: "security",
+          documentId: id,
+          details: {
+            message: `Documento criptato: ${document.title}`,
+            filePath: filePath,
+            timestamp: new Date().toISOString(),
+            encryptedPath: updatedDocument.encryptedCachePath,
+          },
+        });
+      }
+
+      res.json({
+        message: "Documento criptato con successo",
+        document: updatedDocument,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Impossibile criptare il documento" });
+    }
+  });
+
+  app.get("/api/documents/:id/verify", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.legacyId, 10);
+
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ message: "Documento non trovato" });
+      }
+
+      if (!document.fileHash || !document.encryptedCachePath) {
+        return res.status(400).json({
+          message: "Il documento non è stato ancora criptato o non ha un hash",
+          status: "not_encrypted",
+        });
+      }
+
+      const isValid = await storage.verifyDocumentIntegrity(id);
+
+      if (req.user) {
+        await storage.createLog({
+          userId: req.user.legacyId,
+          action: "security",
+          documentId: id,
+          details: {
+            message: `Verifica integrità documento: ${document.title}`,
+            result: isValid ? "valido" : "invalido",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+
+      if (isValid) {
+        res.json({
+          message: "Verifica integrità documento completata",
+          status: "valid",
+          document,
+        });
+      } else {
+        res.status(400).json({
+          message:
+            "Verifica integrità fallita! Il documento potrebbe essere stato manomesso.",
+          status: "invalid",
+          document,
+        });
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Impossibile verificare l'integrità del documento" });
+    }
+  });
+
+  app.post("/api/documents/:id/share", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.legacyId, 10);
+      const { action, expiryHours } = req.body;
+
+      if (!action || !["view", "download"].includes(action)) {
+        return res.status(400).json({
+          message: "Azione non valida. Deve essere 'view' o 'download'",
+        });
+      }
+
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ message: "Documento non trovato" });
+      }
+
+      const expiryMs = (expiryHours || 24) * 60 * 60 * 1000;
+
+      if (!req.user || !req.user.legacyId) {
+        return res.status(401).json({ message: "Utente non autenticato" });
+      }
+
+      const secureLink = generateSecureLink(
+        id,
+        req.user.legacyId,
+        action,
+        expiryMs
+      );
+
+      const absoluteUrl = `${req.protocol}://${req.get("host")}${secureLink}`;
+
+      res.json({
+        message: "Link di condivisione generato",
+        shareLink: absoluteUrl,
+        expires: new Date(Date.now() + expiryMs).toISOString(),
+        documentId: id,
+        action,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Impossibile generare il link di condivisione" });
+    }
+  });
+
+  app.get("/api/secure/:encodedData/:expires/:signature", async (req, res) => {
+    try {
+      const { encodedData, expires, signature } = req.params;
+
+      const linkData = verifySecureLink(encodedData, expires, signature);
+
+      if (!linkData) {
+        return res.status(401).json({ message: "Link non valido o scaduto" });
+      }
+
+      if (linkData.action === "reset-password") {
+        return res.redirect(
+          `/reset-password?data=${encodedData}&expires=${expires}&signature=${signature}`
+        );
+      }
+
+      if (linkData.documentId === null) {
+        return res
+          .status(400)
+          .json({ message: "Link non valido: documento non specificato" });
+      }
+
+      const document = await storage.getDocument(linkData.documentId);
+      if (!document) {
+        return res.status(404).json({ message: "Documento non trovato" });
+      }
+
+      await storage.createLog({
+        userId: linkData.userId,
+        action: `secure-link-${linkData.action}`,
+        documentId: linkData.documentId,
+        details: {
+          message: `Accesso documento tramite link sicuro: ${document.title}`,
+          action: linkData.action,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      if (linkData.action === "view") {
+        return res.redirect(
+          `/documents/view/${linkData.documentId}?secure=true`
+        );
+      } else if (linkData.action === "download") {
+        if (document.encryptedCachePath) {
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${document.title}"`
+          );
+          return res.json({
+            message: "Documento disponibile per il download",
+            document: { ...document, secureAccess: true },
+          });
+        } else {
+          return res.redirect(document.driveUrl);
+        }
+      }
+
+      res.status(400).json({ message: "Azione non valida" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Errore durante l'elaborazione del link sicuro" });
+    }
+  });
+
+  app.post("/api/verify-reset-link", async (req, res) => {
+    try {
+      const { data, expires, signature } = req.body;
+
+      if (!data || !expires || !signature) {
+        // Log del tentativo di bypass
+        await storage.createLog({
+          userId: 0,
+          action: "security-alert",
+          details: {
+            message: "Tentativo di bypass verifica link reset password - parametri mancanti",
+            ipAddress: req.ip || "unknown",
+            userAgent: req.get("User-Agent") || "unknown",
+            timestamp: new Date().toISOString(),
+            endpoint: "/api/verify-reset-link"
+          }
+        });
+        
+        return res
+          .status(400)
+          .json({ success: false, message: "Parametri mancanti" });
+      }
+
+      // Validazione rigorosa della firma HMAC
+      const linkData = verifySecureLink(data, expires, signature);
+
+      if (!linkData) {
+        // Log del tentativo di bypass con firma non valida
+        await storage.createLog({
+          userId: 0,
+          action: "security-alert",
+          details: {
+            message: "Tentativo di bypass verifica link reset password - firma HMAC non valida",
+            ipAddress: req.ip || "unknown",
+            userAgent: req.get("User-Agent") || "unknown",
+            timestamp: new Date().toISOString(),
+            endpoint: "/api/verify-reset-link",
+            providedData: data.substring(0, 50) + "...", // Log parziale per sicurezza
+            providedExpires: expires,
+            providedSignature: signature.substring(0, 20) + "..."
+          }
+        });
+        
+        return res
+          .status(401)
+          .json({ success: false, message: "Link non valido o scaduto" });
+      }
+
+      // Verifica aggiuntiva che sia effettivamente un link di reset password
+      if (linkData.action !== "reset-password") {
+        await storage.createLog({
+          userId: 0,
+          action: "security-alert",
+          details: {
+            message: "Tentativo di uso improprio di link sicuro per reset password",
+            ipAddress: req.ip || "unknown",
+            userAgent: req.get("User-Agent") || "unknown",
+            timestamp: new Date().toISOString(),
+            endpoint: "/api/verify-reset-link",
+            action: linkData.action,
+            userId: linkData.userId
+          }
+        });
+        
+        return res
+          .status(401)
+          .json({ success: false, message: "Tipo di link non valido" });
+      }
+
+      // Log dell'accesso legittimo
+      await storage.createLog({
+        userId: linkData.userId,
+        action: "reset-link-verified",
+        details: {
+          message: "Link di reset password verificato con successo",
+          ipAddress: req.ip || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      res.json({ success: true, message: "Link valido", data: linkData });
+    } catch (error) {
+      console.error("Errore durante la verifica del link di reset:", error);
+      
+      // Log dell'errore
+      await storage.createLog({
+        userId: 0,
+        action: "security-error",
+        details: {
+          message: "Errore durante la verifica del link di reset password",
+          ipAddress: req.ip || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+          timestamp: new Date().toISOString(),
+          endpoint: "/api/verify-reset-link",
+          error: error instanceof Error ? error.message : "Unknown error"
+        }
+      });
+      
+      res
+        .status(500)
+        .json({ success: false, message: "Errore durante la verifica del link" });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { userId, password, data, expires, signature } = req.body;
+      
+      let userIdToUpdate: number;
+      let linkData: any = null;
+
+      // Verifica se abbiamo userId diretto o token
+      if (userId) {
+        userIdToUpdate = userId;
+      } else if (data && expires && signature) {
+        // Validazione rigorosa del token con controlli HMAC completi
+        linkData = verifySecureLink(data, expires, signature);
+        
+        if (!linkData) {
+          // Log del tentativo di bypass
+          await storage.createLog({
+            userId: 0,
+            action: "security-alert",
+            details: {
+              message: "Tentativo di bypass reset password - firma HMAC non valida",
+              ipAddress: req.ip || "unknown",
+              userAgent: req.get("User-Agent") || "unknown",
+              timestamp: new Date().toISOString(),
+              endpoint: "/api/reset-password",
+              providedData: data.substring(0, 50) + "...",
+              providedExpires: expires,
+              providedSignature: signature.substring(0, 20) + "..."
+            }
+          });
+          
+          return res.status(401).json({ 
+            success: false, 
+            message: "Token non valido o scaduto" 
+          });
+        }
+        
+        if (linkData.action !== "reset-password") {
+          await storage.createLog({
+            userId: 0,
+            action: "security-alert",
+            details: {
+              message: "Tentativo di uso improprio di token per reset password",
+              ipAddress: req.ip || "unknown",
+              userAgent: req.get("User-Agent") || "unknown",
+              timestamp: new Date().toISOString(),
+              endpoint: "/api/reset-password",
+              action: linkData.action,
+              userId: linkData.userId
+            }
+          });
+          
+          return res.status(401).json({ 
+            success: false, 
+            message: "Tipo di token non valido" 
+          });
+        }
+        
+        userIdToUpdate = linkData.userId;
+      } else {
+        // Log del tentativo di bypass
+        await storage.createLog({
+          userId: 0,
+          action: "security-alert",
+          details: {
+            message: "Tentativo di reset password senza autenticazione",
+            ipAddress: req.ip || "unknown",
+            userAgent: req.get("User-Agent") || "unknown",
+            timestamp: new Date().toISOString(),
+            endpoint: "/api/reset-password"
+          }
+        });
+        
+        return res.status(400).json({ 
+          success: false, 
+          message: "Dati incompleti: userId o token richiesti" 
+        });
+      }
+
+      if (!password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Password mancante" 
+        });
+      }
+
+      // Validazione della password
+      if (password.length < 8) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "La password deve essere di almeno 8 caratteri" 
+        });
+      }
+
+      // Verifica che l'utente esista
+      const user = await storage.getUser(userIdToUpdate);
+      if (!user) {
+        await storage.createLog({
+          userId: 0,
+          action: "security-alert",
+          details: {
+            message: "Tentativo di reset password per utente inesistente",
+            ipAddress: req.ip || "unknown",
+            userAgent: req.get("User-Agent") || "unknown",
+            timestamp: new Date().toISOString(),
+            endpoint: "/api/reset-password",
+            attemptedUserId: userIdToUpdate
+          }
+        });
+        
+        return res.status(404).json({ 
+          success: false, 
+          message: "Utente non trovato" 
+        });
+      }
+
+      // Hash della nuova password usando scrypt (stesso algoritmo del login)
+      const { hashPassword } = await import('./auth');
+      const hashedPassword = await hashPassword(password);
+
+      // Aggiorna la password
+      const updatedUser = await storage.updateUserPassword(userIdToUpdate, hashedPassword);
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Errore nell'aggiornamento della password"
+        });
+      }
+
+      // Log dell'azione di successo
+      await storage.createLog({
+        userId: userIdToUpdate,
+        action: "password-reset-complete",
+        details: {
+          message: "Reset password completato con successo",
+          timestamp: new Date().toISOString(),
+          ipAddress: req.ip || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+          resetMethod: linkData ? "secure-link" : "direct-userId",
+          userEmail: user.email
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Password reimpostata con successo" 
+      });
+    } catch (error) {
+      console.error("Errore nel reset della password:", error);
+      
+      // Log dell'errore
+      await storage.createLog({
+        userId: 0,
+        action: "security-error",
+        details: {
+          message: "Errore durante il reset della password",
+          ipAddress: req.ip || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+          timestamp: new Date().toISOString(),
+          endpoint: "/api/reset-password",
+          error: error instanceof Error ? error.message : "Unknown error"
+        }
+      });
+      
+      res.status(500).json({
+        success: false,
+        message: "Errore durante il reset della password"
+      });
+    }
+  });
+
   // Endpoint di test per verificare la configurazione Google Drive
   app.get("/api/sync/test-config", isAdmin, async (req, res) => {
     try {

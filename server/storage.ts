@@ -3,6 +3,9 @@ import createMemoryStore from "memorystore";
 import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
+import {
+  verifyFileIntegrity,
+} from "./crypto";
 
 const MemoryStore = createMemoryStore(session);
 
