@@ -18,9 +18,11 @@ if (process.env.NODE_ENV === "production") {
 const app = express();
 
 // ✅ CORS config
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map(origin => origin.trim())
-  : ["http://localhost:5173"];
+const allowedOrigins = [
+  'https://cruscottosgi.it',
+  'https://www.cruscottosgi.it',
+  'https://cruscotto-sgi-1.onrender.com'
+];
 
 app.use(
   cors({
