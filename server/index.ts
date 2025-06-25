@@ -19,7 +19,7 @@ const app = express();
 
 // ✅ CORS config
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",")
+  ? process.env.CORS_ORIGIN.split(",").map(origin => origin.trim())
   : ["http://localhost:5173"];
 
 app.use(
@@ -74,15 +74,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Route di esempio per /api/user (GET)
-app.get("/api/user", (req, res) => {
-  res.json({ user: { id: 1, name: "Mario Rossi" } });
-});
-
-// Route di esempio per /api/auth (POST)
-app.post("/api/auth", (req, res) => {
-  res.json({ success: true, token: "abc123" });
-});
 
 // Handler globale per tutte le API non trovate (risponde sempre in JSON)
 app.use("/api", (req, res) => {
