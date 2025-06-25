@@ -74,6 +74,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Route di esempio per /api/user (GET)
+app.get("/api/user", (req, res) => {
+  res.json({ user: { id: 1, name: "Mario Rossi" } });
+});
+
+// Route di esempio per /api/auth (POST)
+app.post("/api/auth", (req, res) => {
+  res.json({ success: true, token: "abc123" });
+});
+
+// Handler globale per tutte le API non trovate (risponde sempre in JSON)
+app.use("/api", (req, res) => {
+  res.status(404).json({ message: "API route not found" });
+});
+
 (async () => {
   try {
     logger.info("Connessione a MongoDB...");
